@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Formik, FormikHelpers, FormikProps } from "formik";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import * as Yup from "yup";
+import { auth } from "../firebase";
 
 interface SignInValues {
   email: string;
@@ -15,17 +17,24 @@ const SignInSchema = Yup.object().shape({
 });
 
 export default function SignInScreen() {
+  const router = useRouter();
   const initialValues: SignInValues = {
     email: "",
     password: "",
   };
 
-  const handleSubmit = (
+  const handleSubmit = async (
     values: SignInValues,
     { resetForm }: FormikHelpers<SignInValues>
   ) => {
-    alert("Signed in:\n" + JSON.stringify(values, null, 2));
-    resetForm();
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      Alert.alert("Success", "Signed in successfully");
+      resetForm();
+      router.replace("/employeeform");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (

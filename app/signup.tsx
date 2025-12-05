@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Formik, FormikHelpers, FormikProps } from "formik";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import * as Yup from "yup";
+import { auth } from "../firebase";
 
 interface SignUpValues {
   email: string;
@@ -19,11 +21,18 @@ const SignUpSchema = Yup.object().shape({
 });
 
 export default function SignUpScreen() {
+  const router = useRouter();
   const initialValues: SignUpValues = { email: "", password: "", confirm: "" };
 
-  const handleSubmit = (values: SignUpValues, { resetForm }: FormikHelpers<SignUpValues>) => {
-    alert("Account Created:\n" + JSON.stringify(values, null, 2));
-    resetForm();
+  const handleSubmit = async (values: SignUpValues, { resetForm }: FormikHelpers<SignUpValues>) => {
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      Alert.alert("Success", "Account created successfully");
+      resetForm();
+      router.replace("/");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (

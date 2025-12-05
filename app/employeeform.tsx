@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { Formik, FormikHelpers, FormikProps } from "formik";
-import React from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect } from "react";
+import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import * as Yup from "yup";
+import { db } from "../firebase";
 
 interface EmployeeFormValues {
   fullname: string;
@@ -11,6 +13,7 @@ interface EmployeeFormValues {
   phone: string;
   department: string;
 }
+
 
 const EmployeeSchema = Yup.object().shape({
   fullname: Yup.string().required("Required"),
@@ -29,12 +32,32 @@ export default function EmployeeFormScreen() {
     department: "",
   };
 
-  const handleSubmit = (
+  const fetchEmployees =  async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "employees"));
+      console.log("Employees in Firestore:");
+      querySnapshot.forEach((doc) => {
+        console.log(`${doc.id} =>`, doc.data());
+      });
+    } catch (e) {
+      console.error("Error fetching employees:", e);
+    }
+  };
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const handleSubmit = async (
     values: EmployeeFormValues,
     { resetForm }: FormikHelpers<EmployeeFormValues>
   ) => {
-    alert("Employee Saved:\n" + JSON.stringify(values, null, 2));
-    resetForm();
+    try {
+      await addDoc(collection(db, "employees"), values);
+      Alert.alert("Success", "Employee data saved successfully");
+      resetForm();
+    } catch (e: any) {
+      Alert.alert("Error", e.message);
+    }
   };
 
   return (
@@ -136,4 +159,3 @@ const styles = StyleSheet.create({
     marginRight: 10,
   }
 });
-
